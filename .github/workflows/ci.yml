@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and start the stack
+        run: docker compose up -d --build
+
+      - name: Wait for services
+        run: sleep 15
+
+      - name: Smoke test the health endpoint via Nginx
+        run: curl --fail http://localhost:8080/health
+
+      - name: Check Prometheus is up
+        run: curl --fail http://localhost:9090/-/healthy
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
